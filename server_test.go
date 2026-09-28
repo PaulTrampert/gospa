@@ -5,42 +5,64 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/fstest"
 )
 
-func TestHelloWorld(t *testing.T) {
+func TestStaticAssets(t *testing.T) {
+	files := fstest.MapFS{
+		"index.html":    {Data: []byte("<html></html>")},
+		"assets/app.js": {Data: []byte("console.log('hi');")},
+	}
+
 	tests := []struct {
-		verb           string
-		expectedStatus int
-		expectedBody   string
+		path                string
+		expectedStatus      int
+		expectedContentType string
+		expectedBody        string
 	}{
 		{
-			verb:           "GET",
-			expectedStatus: http.StatusOK,
-			expectedBody:   "Hello World\n",
+			path:                "/index.html",
+			expectedStatus:      http.StatusMovedPermanently,
+			expectedContentType: "",
+			expectedBody:        "",
 		},
 		{
-			verb:           "POST",
-			expectedStatus: http.StatusMethodNotAllowed,
-			expectedBody:   "Method Not Allowed\n",
+			path:                "/",
+			expectedStatus:      http.StatusOK,
+			expectedContentType: "text/html; charset=utf-8",
+			expectedBody:        "<html></html>",
+		},
+		{
+			path:                "/assets/app.js",
+			expectedStatus:      http.StatusOK,
+			expectedContentType: "text/javascript; charset=utf-8",
+			expectedBody:        "console.log('hi');",
+		},
+		{
+			path:                "/not/found.html",
+			expectedStatus:      http.StatusNotFound,
+			expectedContentType: "text/plain; charset=utf-8",
+			expectedBody:        "",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.verb, func(t *testing.T) {
-			req, err := http.NewRequest(tt.verb, "/hello", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			rr := httptest.NewRecorder()
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, test.path, nil)
+			w := httptest.NewRecorder()
 
-			newServer(slog.New(slog.DiscardHandler)).ServeHTTP(rr, req)
+			newServer(slog.New(slog.DiscardHandler), files).ServeHTTP(w, req)
 
-			if rr.Code != tt.expectedStatus {
-				t.Errorf("Expected status %d, got %d", tt.expectedStatus, rr.Code)
+			if w.Code != test.expectedStatus {
+				t.Errorf("Expected status %d, got %d", test.expectedStatus, w.Code)
 			}
 
-			if rr.Body.String() != tt.expectedBody {
-				t.Errorf("Expected body %q, got %q", tt.expectedBody, rr.Body.String())
+			if w.Header().Get("Content-Type") != test.expectedContentType {
+				t.Errorf("Expected content type %q, got %q", test.expectedContentType, w.Header().Get("Content-Type"))
+			}
+
+			if test.expectedBody != "" && w.Body.String() != test.expectedBody {
+				t.Errorf("Expected body %q, got %q", test.expectedBody, w.Body.String())
 			}
 		})
 	}

@@ -1,16 +1,15 @@
 package main
 
 import (
-	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/http"
 )
 
-func newServer(logger *slog.Logger) http.Handler {
+func newServer(logger *slog.Logger, wwwroot fs.FS) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /hello", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello World")
-	})
+
+	mux.Handle("/", http.FileServerFS(wwwroot))
 
 	server := logRequests(logger, mux)
 

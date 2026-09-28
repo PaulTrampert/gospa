@@ -56,10 +56,7 @@ func TestLogRequests(t *testing.T) {
 
 			handler := logRequests(&logger, next)
 
-			req, err := http.NewRequest(tt.verb, tt.path, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			req := httptest.NewRequest(tt.verb, tt.path, nil)
 			req.RemoteAddr = tt.remoteAddr
 			w := httptest.NewRecorder()
 
