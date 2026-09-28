@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -32,7 +33,7 @@ func TestHelloWorld(t *testing.T) {
 			}
 			rr := httptest.NewRecorder()
 
-			newServer().ServeHTTP(rr, req)
+			newServer(slog.New(slog.DiscardHandler)).ServeHTTP(rr, req)
 
 			if rr.Code != tt.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tt.expectedStatus, rr.Code)

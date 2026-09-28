@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
-func newServer() *http.ServeMux {
+func newServer(logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /hello", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Received request for /hello from %s", r.RemoteAddr)
 		fmt.Fprintln(w, "Hello World")
 	})
-	return mux
+
+	server := logRequests(logger, mux)
+
+	return server
 }

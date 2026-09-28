@@ -2,13 +2,14 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 )
 
 func main() {
-	mux := newServer()
+	server := newServer(slog.Default())
 
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	if err := http.ListenAndServe(":8080", server); err != nil {
 		log.Fatal(err)
 	}
 }
