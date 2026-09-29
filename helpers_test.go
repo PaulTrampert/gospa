@@ -1,6 +1,8 @@
 package main
 
-import "log/slog"
+import (
+	"log/slog"
+)
 
 // Test logger. Records log messages as received.
 type testLogger struct {
