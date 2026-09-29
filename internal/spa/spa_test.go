@@ -1,4 +1,4 @@
-package main
+package spa
 
 import (
 	"io/fs"
@@ -12,6 +12,7 @@ func TestSpaHandler(t *testing.T) {
 	rootIndexContent := "<html></html>"
 	appJsContent := "console.log('hello world');"
 	docsIndexContent := "<html><body>hello world!</body></html>"
+	notFoundContent := "404 page not found\n"
 
 	files := fstest.MapFS{
 		"index.html":      {Data: []byte(rootIndexContent)},
@@ -32,6 +33,8 @@ func TestSpaHandler(t *testing.T) {
 		{path: "docs/", expectedContent: docsIndexContent, expectedStatus: http.StatusOK, expectedLocation: ""},
 		{path: "docs/index.html", expectedContent: "", expectedStatus: http.StatusMovedPermanently, expectedLocation: "./"},
 		{path: "empty", expectedContent: rootIndexContent, expectedStatus: http.StatusOK, expectedLocation: ""},
+		{path: "/dashboard/settings", expectedContent: rootIndexContent, expectedStatus: http.StatusOK, expectedLocation: ""},
+		{path: "/assets/missing.js", expectedContent: notFoundContent, expectedStatus: http.StatusNotFound, expectedLocation: ""},
 	}
 
 	for _, test := range tests {
@@ -39,7 +42,7 @@ func TestSpaHandler(t *testing.T) {
 			req, _ := http.NewRequest("GET", test.path, nil)
 			w := httptest.NewRecorder()
 
-			handler := newSPAHandler(files)
+			handler := NewHandler(files)
 			handler.ServeHTTP(w, req)
 
 			if w.Code != test.expectedStatus {
