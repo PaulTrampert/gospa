@@ -19,7 +19,7 @@ func newSPAHandler(wwwroot fs.FS) http.Handler {
 			return
 		}
 
-		if fileInfo.IsDir() {
+		if fileInfo != nil && fileInfo.IsDir() {
 			_, err := fs.Stat(wwwroot, path.Join(reqPath, "index.html"))
 			if errors.Is(err, fs.ErrNotExist) {
 				http.ServeFileFS(w, req, wwwroot, "index.html")
